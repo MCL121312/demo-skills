@@ -1,181 +1,118 @@
-# 🛠 Skills Demo
+# 工程增强技能框架
 
-AI Agent Skills 示例项目，参考 [antfu/skills](https://github.com/antfu/skills) 的设计理念。
+这是一个面向 AI Agent 的工程能力增强项目。它的目标不是教 AI 写代码，而是教 AI 像高级软件工程师一样**思考**：在动手之前先判断问题、识别不确定性、选择正确的工作方式，并把思考过程变成可追踪的文档。
 
-## 📁 项目结构
+## 设计哲学
 
-```
-.
-├── .agents/
-│   └── skills/                    # Skills 目录
-│       └── commit-checker/        # Commit 检查 Skill
-│           ├── SKILL.md           # Skill 主索引文件
-│           ├── TEST_CASES.md      # 测试用例
-│           └── references/        # 具体的技能参考文档
-│               ├── core-validation.md
-│               ├── core-output.md
-│               └── core-examples.md
-└── README.md
-```
+### 问题：AI 不会"先想后做"
 
-## 🧠 设计理念
+大多数 AI Agent 在收到请求后会立即执行：直接生成代码、直接写 PRD、直接给出架构方案。这在问题清晰时效率很高，但在以下情况下会造成严重错误：
 
-这个项目采用 **纯文档形式** 的 Skill 设计，由 AI 大模型直接读取和执行：
+- 需求模糊，AI 却假装理解然后生成一份"看起来完整"的文档；
+- 问题属于探索阶段，AI 却跳过验证直接给出详细设计；
+- 线上发生事故，AI 却在做需求分析；
+- 用户只有一个想法，AI 却把它写成了已批准的规格。
 
-1. **纯 Markdown 文档** - 没有可执行代码，只有结构化的文档
-2. **AI 直接读取** - 大模型通过 codebase-retrieval 读取这些文档
-3. **Frontmatter 元数据** - 使用 YAML frontmatter 定义 name、description 等
-4. **结构化组织** - 通过表格和分类组织技能引用
+### 解决方案：行为建模，而非提示词堆砌
 
-## 🚀 如何使用
+本框架的核心是让 AI 在每次处理工程问题时，先完成三个判断再行动：
 
-在与 AI 助手对话时，直接提问：
+1. **这是什么类型的问题？** 是已知答案的执行任务，还是需要探索的未知问题？
+2. **现在应该用什么行为模式？** 直接推进、专家分析、迭代探索，还是先澄清？
+3. **用户需要参与到什么程度？** 自动报告结果，还是每一步都需要用户确认？
+
+这三个判断由 `engineering-decision` 技能完成，并通过结构化契约（`document_contract`）将结论传递给下游的文档生成工作流。
+
+## 技能拓扑
 
 ```
-帮我检查这个提交信息：feat: 添加用户登录功能
+用户输入
+    │
+    ▼
+engineering-decision          ← 决策入口
+    │  判断问题类型、Cynefin 域、行为模式、参与度
+    │  输出 decision_brief + document_contract
+    │
+    ▼
+engineering-documents         ← 文档工作流
+       根据契约生成、更新、审查或基线化工程文档
 ```
 
-```
-这条提交信息规范吗：修复了一个bug
-```
+两个技能之间通过 `document_contract` 握手，而不是通过自然语言传递意图。这确保了跨技能协作时信息的结构化和一致性。
 
-AI 助手会：
-1. 通过 codebase-retrieval 读取 `.agents/skills/commit-checker/SKILL.md`
-2. 根据 SKILL.md 中的规则执行检查
-3. 按照规定的格式输出结果（以 `已调用 commit-checker Skill。` 开头）
+## 核心机制
 
-## 📝 Skill 开发指南
+### Cynefin 框架
 
-### Skill 目录结构
+用于判断当前问题所处的域，决定行为模式：
 
-每个 Skill 应该包含以下文件：
+| 域 | 典型场景 | 行为模式 |
+| --- | --- | --- |
+| 清晰域（`clear`） | 需求、规则、验收标准都已明确 | 直接推进 |
+| 繁杂域（`complicated`） | 需要专家比较多个技术方案 | 专家分析 |
+| 复杂域（`complex`） | 用户需求、采用行为未经验证 | 迭代探索 |
+| 混乱域（`chaotic`） | 线上事故、数据损失、安全事件 | 先止损 |
+| 未明状态（`confused`） | 信息严重不足，无法判断 | 先澄清 |
 
-```
-.agents/skills/your-skill/
-├── SKILL.md           # Skill 主索引文件（必需）
-├── TEST_CASES.md      # 测试用例文档（推荐）
-└── references/        # 具体的技能参考文档（推荐）
-    ├── core-*.md      # 核心功能
-    ├── feature-*.md   # 特性功能
-    └── advanced-*.md  # 高级功能
-```
+Cynefin 域针对**当前问题**，而非整个项目。大型项目中的一个字段重命名可以是清晰域；小型项目中的未知用户需求也可以是复杂域。
 
-### SKILL.md 格式
+### 信息分层
 
-```markdown
----
-name: skill-name
-description: Brief description of what this skill does. Use when...
-metadata:
-  author: Your Name
-  version: "2026.03.06"
-  source: https://github.com/your/repo
----
+所有输入信息必须被分层，不允许把推断写成事实：
 
-# Skill Title
+| 层 | 含义 |
+| --- | --- |
+| `facts` | 已提供或已验证的信息 |
+| `goals` | 期望达成的结果 |
+| `constraints` | 业务、技术、组织或合规限制 |
+| `assumptions` | 暂时相信但尚未验证的判断 |
+| `unknowns` | 当前不知道的信息 |
+| `conflicts` | 目标或利益相关者之间的冲突 |
+| `risks` | 可能的负面结果 |
+| `decisions` | 有授权确认的选择 |
 
-Brief introduction of the skill.
+### 文档生命周期
 
-## When to Use
-
-- Scenario 1
-- Scenario 2
-- Scenario 3
-
-**Important:** Any special instructions for AI when this skill is triggered.
-
-## Core References
-
-| Topic | Description | Reference |
-|-------|-------------|-----------|
-| Topic 1 | Description | [core-topic1](references/core-topic1.md) |
-| Topic 2 | Description | [core-topic2](references/core-topic2.md) |
-
-<!--
-Source references:
-- https://source-url-1
-- https://source-url-2
--->
-```
-
-### references/*.md 格式
-
-```markdown
----
-name: reference-name
-description: What this reference covers
----
-
-# Reference Title
-
-Detailed content here.
-
-## Usage
-
-Code examples and practical patterns.
-
-## Key Points
-
-- Important detail 1
-- Important detail 2
-
-<!--
-Source references:
-- https://source-url
--->
-```
-
-## 🎯 现有 Skills
-
-### commit-checker
-
-检查 Git 提交信息是否符合 Conventional Commits 规范。
-
-**触发场景：**
-- 用户要求检查/验证提交信息
-- 用户想 review 提交信息合规性
-- 用户需要修复/改写提交信息
-- 用户提到 "Conventional Commits" 或提交信息标准
-
-**示例对话：**
+文档状态必须与实际确定性一致，不能因为章节齐全就提升状态：
 
 ```
-用户：帮我检查这个提交信息：feat: 添加用户登录功能
-AI：已调用 commit-checker Skill。
-
-✅ 通过
-
-原因：type 合法，省略 scope 合理，subject 清晰且未以句号结尾。
+exploratory-draft → draft → proposed-baseline → approved-baseline
 ```
 
-```
-用户：这条提交信息规范吗：修复了一个bug
-AI：已调用 commit-checker Skill。
+### 用户参与度（L0–L4）
 
-❌ 不通过
+| 级别 | 含义 |
+| --- | --- |
+| `L0` | 自动推进并报告结果 |
+| `L1` | 自动推进，公开关键假设 |
+| `L2` | 提供少量方案，让用户选择 |
+| `L3` | 以假设、问题、证据组成短循环 |
+| `L4` | 用户主导，Agent 负责整理和起草 |
 
-问题：
-1. 缺少合法的 type 前缀
+高风险、不可逆、跨团队或安全相关的操作必须提高参与度，不受 Cynefin 域限制。
 
-建议：
-fix: 修复登录接口报错问题
-```
+## 技能目录
 
-## 🔍 如何验证 Skill 是否生效
+| 技能 | 职责 | 位置 |
+| --- | --- | --- |
+| `engineering-decision` | 决策入口：判断问题类型、Cynefin 域、行为模式和参与度，输出 `decision_brief` | `.agents/skills/engineering-decision/` |
+| `engineering-documents` | 文档工作流：根据契约生成、更新、审查或基线化工程文档 | `.agents/skills/engineering-documents/` |
 
-当你向 AI 助手提问时，如果 Skill 被正确调用，你会看到：
+## 使用方式
 
-1. **特定的开头** - 回复以 `已调用 commit-checker Skill。` 开头
-2. **结构化输出** - 按照 SKILL.md 中定义的格式输出
-3. **明确结论** - 给出 `✅ 通过` 或 `❌ 不通过`
-4. **具体建议** - 如果不通过，提供可直接使用的修改建议
+技能由支持 Agent Skills 规范的 Agent 自动发现和触发；不同 Agent 平台的加载方式
+可能不同。常见场景：
 
-## 📚 参考资料
+- **"这个需求应该先调研还是直接开发？"** → 触发 `engineering-decision`
+- **"帮我写一份 PRD"** → 若有 `decision_brief` 则触发 `engineering-documents`；若没有，先触发 `engineering-decision`
+- **"线上正在发生重复扣款"** → 触发 `engineering-decision`，进入 `stabilization` 模式
+- **"帮我审查这份 SRS"** → 触发 `engineering-documents` 的 `review` 流程
 
-- [antfu/skills](https://github.com/antfu/skills) - Anthony Fu 的 Agent Skills 集合
-- [Agent Skills](https://agentskills.io/) - Agent Skills 官方网站
-- [Conventional Commits](https://www.conventionalcommits.org/) - 提交信息规范
+不应触发任何技能的场景：代码修改、翻译、格式化、按完整规格生成代码。
 
-## 📝 License
+## 关键约束
 
-MIT
+- **目的门槛优先**：在分析代码仓库之前，必须先确认评估目的、项目阶段、当前目标和决策权。
+- **置信度限制行为**：置信度 `low` 时，只输出问题单和澄清问题，不给正式架构结论。
+- **高风险操作必须确认**：不可逆、高影响的操作始终需要明确的确认门槛。
+- **中文优先**：面向用户的所有内容默认使用简体中文；英文只保留固定字段名、代码和必要技术专名。

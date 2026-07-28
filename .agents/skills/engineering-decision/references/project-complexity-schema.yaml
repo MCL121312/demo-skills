@@ -1,0 +1,33 @@
+version: 1
+
+project_complexity:
+  overall: unknown
+  average_score: null
+  confidence: low
+  dimensions:
+    domain:
+      score: unknown
+      evidence: []
+    technical:
+      score: unknown
+      evidence: []
+    integration:
+      score: unknown
+      evidence: []
+    organizational:
+      score: unknown
+      evidence: []
+    uncertainty:
+      score: unknown
+      evidence: []
+    change:
+      score: unknown
+      evidence: []
+    operations:
+      score: unknown
+      evidence: []
+    risk:
+      score: unknown
+      evidence: []
+  dominant_sources: []
+  missing_context: []

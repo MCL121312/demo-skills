@@ -1,0 +1,9 @@
+version: 1
+
+document_contract:
+  type: issue-brief | prd | exploratory-prd | srs | adr | ux-spec | experiment-plan | incident-brief | high-level-design | detailed-design
+  status: exploratory-draft | draft | proposed-baseline | approved-baseline
+  purpose: ""
+  required_sections: []
+  prohibited_sections: []
+  source_decision_brief: decision-brief.yaml

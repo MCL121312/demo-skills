@@ -1,0 +1,11 @@
+document:
+  type: issue-brief | prd | exploratory-prd | srs | adr | ux-spec | experiment-plan | incident-brief | high-level-design | detailed-design
+  status: exploratory-draft | draft | proposed-baseline | approved-baseline
+  version: 0.1
+  cynefin_domain: confused | clear | complicated | complex | chaotic
+  confidence: low | medium | high
+  behavior_mode: clarification | direct-execution | expert-analysis | iterative-discovery | stabilization | review-and-alignment
+  source_decision_brief: decision-brief.yaml
+  source_model: requirements-model.yaml
+  decision_required: false
+  last_reviewed: ""

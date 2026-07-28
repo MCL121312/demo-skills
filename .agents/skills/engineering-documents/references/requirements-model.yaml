@@ -1,0 +1,52 @@
+version: 1
+
+problem:
+  statement: ""
+  current_behavior: ""
+  desired_behavior: ""
+  context: ""
+
+facts: []
+stakeholders: []
+users: []
+
+goals:
+  outcomes: []
+  success_metrics: []
+  non_goals: []
+
+constraints:
+  business: []
+  technical: []
+  organizational: []
+  legal_or_compliance: []
+  operational: []
+
+requirements:
+  functional: []
+  non_functional: []
+  business_rules: []
+  acceptance_criteria: []
+
+ux:
+  personas: []
+  scenarios: []
+  journeys: []
+  task_flows: []
+  usability_risks: []
+  accessibility_needs: []
+
+architecture:
+  system_boundary: ""
+  components: []
+  data_flows: []
+  interfaces: []
+  data_model: []
+  deployment_constraints: []
+
+assumptions: []
+risks: []
+decisions: []
+open_questions: []
+traceability: []
+documents: []

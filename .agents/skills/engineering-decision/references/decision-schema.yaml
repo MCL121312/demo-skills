@@ -1,0 +1,42 @@
+version: 1
+
+decision_brief:
+  issue: {}
+  context_summary: ""
+  project_complexity: {}
+  information_layers:
+    facts: []
+    goals: []
+    constraints: []
+    assumptions: []
+    unknowns: []
+    conflicts: []
+    risks: []
+    decisions: []
+  classification:
+    problem_type: unknown
+    cynefin_domain: confused
+    confidence: low
+    confidence_limit: ""
+    evidence: []
+    alternatives: []
+    reclassify_when: []
+  behavior:
+    mode: clarification
+    purpose: ""
+    engagement_level: L3
+    allowed_actions: []
+    blocked_actions: []
+    confirmation_gates: []
+  next_action:
+    description: ""
+    owner: ""
+    expected_evidence: ""
+  document_contract:
+    needed: false
+    type: ""
+    status: exploratory-draft
+    purpose: ""
+    required_sections: []
+    prohibited_sections: []
+  next_questions: []
