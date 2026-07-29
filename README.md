@@ -2,6 +2,17 @@
 
 这是一个面向 AI Agent 的工程能力增强项目。它的目标不是教 AI 写代码，而是教 AI 像高级软件工程师一样**思考**：在动手之前先判断问题、识别不确定性、选择正确的工作方式，并把思考过程变成可追踪的文档。
 
+## 受众
+
+| 适合 | 不适合作为主用户 |
+| --- | --- |
+| 研发、Tech Lead、架构：判断先验证还是先做、选型、事故止损、ADR/设计 | 纯翻译、格式化、按完整规格机械写代码的任务（本框架明确不触发） |
+| 产品 / 业务分析：在不确定时写探索版 PRD、SRS，避免把想法写成已批准规格 | 期望“不问上下文直接给复杂度/架构结论”的一次性仓库扫描 |
+| 实施：群聊/工单 → 现场记录（角色·模块·现象·诉求 + 验证）（走 `implementation-intake`） | 把实施现场问题默认升级成 Cynefin/架构评估 |
+| 用 AI Agent 做工程协作、需要文档纪律与证据分层的人 | — |
+
+实施主路径是 `implementation-intake`。仅当实施问题升级为先验证还是先做、技术选型、事故止损时，再走 `engineering-decision`。
+
 ## 设计哲学
 
 ### 问题：AI 不会"先想后做"
@@ -28,17 +39,17 @@
 ```
 用户输入
     │
-    ▼
-engineering-decision          ← 决策入口
-    │  判断问题类型、Cynefin 域、行为模式、参与度
-    │  输出 decision_brief + document_contract
+    ├─ 实施群聊/工单/现场口述 ──► implementation-intake
+    │                                现场记录（条目四元组 + 验证 + 待确认）
     │
-    ▼
-engineering-documents         ← 文档工作流
-       根据契约生成、更新、审查或基线化工程文档
+    └─ 研发决策/不确定怎么推进 ──► engineering-decision
+                                       │  decision_brief + document_contract
+                                       ▼
+                                 engineering-documents
+                                       按契约生成/更新/审查/基线化工程文档
 ```
 
-两个技能之间通过 `document_contract` 握手，而不是通过自然语言传递意图。这确保了跨技能协作时信息的结构化和一致性。
+工程链两个技能之间通过 `document_contract` 握手。实施链默认独立输出现场记录；仅在明确升级时进入工程链。
 
 ## 核心机制
 
@@ -95,14 +106,20 @@ exploratory-draft → draft → proposed-baseline → approved-baseline
 
 | 技能 | 职责 | 位置 |
 | --- | --- | --- |
+| `implementation-intake` | 实施现场记录：群聊/工单 → 角色·模块·现象·诉求条目、验证与待确认 | `.agents/skills/implementation-intake/` |
 | `engineering-decision` | 决策入口：判断问题类型、Cynefin 域、行为模式和参与度，输出 `decision_brief` | `.agents/skills/engineering-decision/` |
 | `engineering-documents` | 文档工作流：根据契约生成、更新、审查或基线化工程文档 | `.agents/skills/engineering-documents/` |
 
 ## 使用方式
 
-技能由支持 Agent Skills 规范的 Agent 自动发现和触发；不同 Agent 平台的加载方式
-可能不同。常见场景：
+技能由支持 Agent Skills 规范的 Agent 自动发现和触发（Cursor 会扫描
+`.agents/skills/` 与 `.cursor/skills/`）。Agent **是否调用**取决于
+`SKILL.md` 的 `description` 是否匹配用户意图；发现成功不等于每次都会触发。
 
+建议用显式斜杠命令或下面短句做触发回归。常见场景：
+
+- **"这段群聊整理成现场记录"** / **"有啥现象和诉求"** → 触发 `implementation-intake`
+- **"预约填过了激活还要填，整理一下要改什么"** → 触发 `implementation-intake`
 - **"这个需求应该先调研还是直接开发？"** → 触发 `engineering-decision`
 - **"帮我写一份 PRD"** → 若有 `decision_brief` 则触发 `engineering-documents`；若没有，先触发 `engineering-decision`
 - **"线上正在发生重复扣款"** → 触发 `engineering-decision`，进入 `stabilization` 模式
@@ -110,9 +127,25 @@ exploratory-draft → draft → proposed-baseline → approved-baseline
 
 不应触发任何技能的场景：代码修改、翻译、格式化、按完整规格生成代码。
 
+## 本地校验
+
+需要 Python 3.9 或更高版本。安装依赖后，可从任意工作目录执行：
+
+```bash
+python3 -m pip install -e '.[test]'
+python3 scripts/validate_skills.py
+python3 -m unittest discover -s tests
+```
+
+同样这两条命令由 `.github/workflows/validate.yml` 在 main 分支和 PR 上执行。
+
+跨 Skill 的完整示例见 `docs/skill-flow-example.md`，触发边界见
+`docs/skill-trigger-matrix.md`。
+
 ## 关键约束
 
 - **目的门槛优先**：在分析代码仓库之前，必须先确认评估目的、项目阶段、当前目标和决策权。
 - **置信度限制行为**：置信度 `low` 时，只输出问题单和澄清问题，不给正式架构结论。
 - **高风险操作必须确认**：不可逆、高影响的操作始终需要明确的确认门槛。
 - **中文优先**：面向用户的所有内容默认使用简体中文；英文只保留固定字段名、代码和必要技术专名。
+- **受众文案**：内部状态机与“暂不做某某分析”是 agent 约束，不要写进用户可见回复；用户只需要结论、边界和下一步问题。

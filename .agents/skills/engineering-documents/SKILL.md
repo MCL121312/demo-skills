@@ -1,14 +1,15 @@
 ---
 name: engineering-documents
 description: >-
-  Use when the user asks to create, update, review, or baseline a software
-  engineering document such as an issue brief, PRD, SRS, ADR, UX
-  specification, experiment plan, incident brief, high-level design, or
-  detailed design. Follow an existing decision brief or document contract
-  when available; preserve facts, assumptions, decisions, uncertainty,
-  traceability, and document status. Do not independently override the
-  recommended engineering behavior or turn exploratory evidence into a formal
-  baseline.
+  软件工程文档工作流：按 decision brief / document_contract 生成、更新、审查
+  或基线化文档。触发词/场景：写 PRD、探索版 PRD、SRS、ADR、UX 规格、
+  实验计划、事件简报、问题单、概要设计、详细设计、审查 SRS/PRD、能否基线、
+  更新这份文档、create/update/review/baseline engineering docs。
+  有 document_contract 时严格遵守类型、状态和必需章节；无 brief 时不阻塞，
+  但必须把缺失标成假设/未知/待决策，不得写成 approved-baseline。
+  不要用于：先调研还是直接开发、怎么推进、项目复杂度、线上止损等决策问题
+  （改走 engineering-decision）；纯改代码/翻译/格式化也不触发。
+  维护本仓库 skill/模板/校验脚本等元任务不要触发。
 ---
 
 # Engineering Documents
@@ -18,11 +19,10 @@ description: >-
 
 ## 输出语言
 
-默认使用简体中文生成文档正文、章节标题、审查意见、风险和开放问题。英文只保留
-YAML/JSON 字段名、固定状态值、代码标识、文件路径和必要技术专名。首次出现英文
-术语时附中文解释，例如“架构决策记录（ADR）”或“探索草稿（`exploratory-draft`）”。
-
-除非用户明确要求英文，不要生成英文版分析报告或英文文档正文。
+语言规则与 `engineering-decision` 一致：默认使用简体中文生成文档正文、章节
+标题、审查意见、风险和开放问题；英文仅保留 YAML/JSON 字段名、固定状态值、代码
+标识、文件路径和必要技术专名，首次出现时附中文解释，例如“架构决策记录（ADR）”。
+除非用户明确要求英文，不要生成英文文档正文。
 
 ## 与 engineering-decision 的关系
 
@@ -85,10 +85,14 @@ YAML/JSON 字段名、固定状态值、代码标识、文件路径和必要技�
 
 1. 读取 decision brief、需求模型和目标模板。
 2. 检查文档契约中的类型、目的、状态和必需章节。
-3. 只填充有依据的内容。
-4. 把未知内容放入假设、开放问题、TBD 或待决策章节。
-5. 根据需要建立 `REQ-*`、`UX-*`、`ADR-*`、`DES-*` 和 `TEST-*` 追踪 ID。
-6. 在末尾列出风险、开放问题和下一步。
+3. 将模板 frontmatter 中的 `<from-decision-brief>`（`cynefin_domain`、
+   `confidence`、`behavior_mode`）和 `<from-document-contract>`（`status`）
+   占位符替换为实际值，不得把占位符原文留在交付文档中；没有 decision brief
+   时，按“与 engineering-decision 的关系”的降级规则自行判断并标注为推断。
+4. 只填充有依据的内容。
+5. 把未知内容放入假设、开放问题、TBD 或待决策章节。
+6. 根据需要建立 `REQ-*`、`UX-*`、`ADR-*`、`DES-*` 和 `TEST-*` 追踪 ID。
+7. 在末尾列出风险、开放问题和下一步。
 
 ### `update`
 

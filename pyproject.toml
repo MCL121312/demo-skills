@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "demo-skills-validator"
+version = "0.1.0"
+description = "Validation tools for the engineering Agent Skills repository"
+requires-python = ">=3.9"
+dependencies = [
+    "PyYAML>=6.0,<7",
+]
+
+[project.optional-dependencies]
+test = []
+
+# No importable package here, only scripts/ and tests/. Declaring an empty
+# module list disables setuptools flat-layout auto-discovery, which otherwise
+# fails on a repository root holding several non-package directories.
+[tool.setuptools]
+py-modules = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

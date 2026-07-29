@@ -1,0 +1,186 @@
+# Field record schema for implementation-intake.
+# Agent: load when drafting or validating a 现场记录; do not dump raw YAML to users
+# unless they ask for structured export.
+
+field_record:
+  description: >
+    One input artifact (chat, ticket, oral note) maps to one field record
+    containing 1..N items. Items are the atomic handoff unit.
+
+  status: "草稿 | 待确认 | 已确认"
+
+  fields:
+    id:
+      description: >
+        记录标识，格式 IN-YYYYMMDD-NN（来源日期 + 当日序号）。
+        条目标识 = 记录 id + #序号，如 IN-20260729-01#2。
+        用于跨会话与跨工单追溯；聊天里可简称「条目2」。
+    source:
+      description: 企微 / 微信 / 工单 / 口述；可选时间窗
+    summary:
+      description: 一句话中性摘要；不写方案或根因
+    status:
+      description: 记录协作状态
+    items:
+      description: 条目列表，至少 1 条
+    conflicts:
+      description: >
+        仅记录「两方对同一事实给出互斥断言，且双方都是陈述句」的情况，
+        例如「功能锁住了」对「没有锁」。用途是防止整理时抹平成单一事实。
+      excluded:
+        - 有人提问但无人回答 → unknowns 或 open_questions
+        - 双方用词/口径不同但未互相否定 → unknowns
+        - 信息缺失 → unknowns
+      dedup: >
+        一条信息只落一个区。冲突已衍生出待确认问题时，只在 open_questions 写，
+        conflicts 不重复同一句。无互斥断言时整项省略，不要留空标题。
+    unknowns:
+      description: >
+        页面名、单号、是否可复现等缺口；只留没有写成 open_questions 的部分，
+        已经问出口的不在此重复。全部已问则整项省略。
+    open_questions:
+      description: 整单最多 3 个；只问会改变拆条或模块归属的问题
+      max: 3
+
+item:
+  description: >
+    Atomic unit with fixed quadruple 角色·模块·现象·诉求.
+    Split when two unrelated asks appear in one chat turn.
+
+  type: "缺陷 | 体验 | 流程配置 | 待定"
+  priority: "主 | 次"
+  status: "待确认 | 已确认 | 已交接 | 已关闭"
+  evidence_grade: "亲见 | 客户口述 | 推测"
+  repro: "已复现 | 未复现 | 无法复现 | 不适用"
+  confidence: "高 | 中 | 低"
+
+  fields:
+    id:
+      description: >
+        记录 id + #序号。序号在记录内不复用：条目作废写「已关闭」，
+        不把编号让给新条目，否则历史引用会指错。
+    role:
+      description: >
+        操作者或受影响角色。禁止填提出人姓名/群昵称；
+        「谁提的」属于 reporter，两者不同时都要写。
+    reporter:
+      description: >
+        提出该条目的人（群昵称、工号或岗位）。条目级而非记录级：
+        一次会话可能多人各提各的。同一人提多条时每条都写。
+    module:
+      description: >
+        页面或能力名。对话未出现则必须为「待确认」，禁止编造菜单名。
+    phenomenon:
+      description: >
+        可观察现状，不写根因。纯改进无故障时写
+        「无故障现象，属体验/顺序/配置问题」。
+        必须同时带 evidence_grade；缺陷类还要带 repro。
+    evidence_grade:
+      description: >
+        对 phenomenon 的信任等级，不是 evidence 字段（后者是原话摘录）。
+        亲见 = 整理者或实施方自己看到；客户口述 = 仅有他人转述；
+        推测 = 「应该是…吧」类未经确认的判断。
+        默认不得升级：客户说得再肯定，没人看过就是客户口述。
+    repro:
+      description: >
+        缺陷类必填。已复现需写清条件；未复现表示尚无人按步骤重现；
+        无法复现表示试过但重现不出。体验/流程配置类无故障现象时填不适用。
+    ask:
+      description: >
+        期望结果。技术方案话（如「查缓存」「改接口」）不是诉求。
+        有现象无诉求时写「待澄清」。
+    type:
+      description: 粗分流标签，只用于决定交接方向
+    priority:
+      description: 卡住业务的缺陷优先于顺带体验
+    evidence:
+      description: >
+        1–2 句原话或时间点，随 reporter 一起渲染在表格下方，不新增表格列。
+        引用他人发言时按发言人署名，不改写成 reporter。
+    verification:
+      description: >
+        可执行步骤：操作 → 观察；失败时用户应看到什么。
+        同步类未证实写「待证实」。首轮可简写，确认后补全。
+    status:
+      description: >
+        条目级状态，逐条流转，不跟随记录状态。首轮统一为「待确认」且不渲染；
+        人确认后才在条目行标注。已交接需同时填 trace。
+    trace:
+      description: >
+        下游去向：工单号、PRD/SRS 条目号、decision_brief 或配置变更单。
+        仅在已交接时必填，其余情况省略。这是实施链到工程链的追溯链接。
+    confidence:
+      description: >
+        整条一个值，仅内部使用，不渲染给实施人员。
+        为「低」时必须体现为模块「待确认」或一个 open_question，否则不要标。
+
+rendering:
+  description: >
+    字段增加不等于输出变重。表格最多六列：编号、角色、模块、现象、诉求、
+    类型+主次。其余字段按下列规则渲染。
+  rules:
+    - 记录 id 写在标题行，条目只显示 #序号
+    - evidence_grade 与 repro 以括号后缀写进现象单元格，如
+      「修改后刷新数值恢复（客户口述·未复现）」；不新增列
+    - repro 为不适用时后缀只写等级，不写「不适用」三个字
+    - reporter 与 evidence 合并成表格下方一行，不占列
+    - status 首轮全为「待确认」时整项不渲染，确认后才逐条标
+    - trace 仅在已交接时出现
+    - confidence、verification 草案不进首轮表格
+
+evidence_gating:
+  description: >
+    证据等级与复现状态必须产生后果，否则又是装饰字段。以下是硬门槛。
+  rules:
+    - evidence_grade 为推测时，条目不得标 已确认
+    - 缺陷类且 repro 为未复现时，不得标 已确认，也不得 已交接
+    - 缺陷类且 repro 为未复现时，open_questions 必须含一个复现问题
+      （谁、在什么条件下、哪个单号能重现）
+    - repro 为无法复现时，可标 已关闭 并记录试过的步骤；
+      业务坚持存在则保留 待确认 或转研发查日志，不得静默关闭
+    - 交接研发的缺陷必须是 已复现，或在 trace 里注明按无法复现的线索移交
+  rationale: >
+    未复现的报告是待验证的声称，不是事实。放行会把传闻变成研发工单，
+    也会让「改好了」无法验收——因为本来就没人见过它坏。
+
+split_rules:
+  - 有现象无诉求 → 可建条，ask=待澄清，追问期望结果
+  - 有诉求无现象 → 允许；phenomenon 标明无故障现象
+  - 一条含两个无关诉求 → 必须拆成两条
+  - 问题与诉求并存 → 拆条并用 priority 标主次，不揉成一句
+
+projections:
+  description: >
+    Optional views after human confirms items. Source of truth remains items.
+  user_story: >
+    作为【role】，希望【ask】，以便【从 phenomenon 推导的价值】；
+    验收条件 = verification
+  use_case_summary: >
+    参与者=role，范围=module；主成功场景由 verification 改写；
+    异常场景来自 phenomenon
+
+handoff:
+  description: >
+    任何交接都要把条目 status 改为「已交接」并回填 trace，
+    否则下游产物找不回源头，追溯链在这里断掉。
+  流程配置: 模块明确时可附一句配置侧下一步；不展开选型
+  缺陷或需改逻辑: 标「需研发」
+  先验证或选型或止损: engineering-decision
+  正式 PRD/SRS/ADR: engineering-documents（缺上下文时先出已确认现场记录）
+
+anti_patterns:
+  - 首轮输出保留/去掉/同步变更方案冒充现场记录
+  - 首轮输出技术根因长文或配置项清单
+  - 把「锁了」等猜测写成事实
+  - 编造未出现的产品菜单名
+  - 默认落盘或默认输出完整用户故事/UML
+  - 未证实同步却承诺「删了也会进系统」
+  - 把提出人写进 role
+  - 把提问、术语差异或信息缺失当成 conflicts
+  - 同一句话同时出现在 conflicts、unknowns 和 open_questions
+  - 把客户口述的现象当成亲见事实
+  - 未复现的缺陷标已确认或直接开研发工单
+  - 无法复现就静默关闭，不记录试过的步骤
+  - 条目作废后把编号让给新条目
+  - 交接下游却不回填 trace
+  - 为新增字段增加表格列，把首轮输出撑宽

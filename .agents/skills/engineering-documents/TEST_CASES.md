@@ -1,5 +1,7 @@
 # engineering-documents 测试用例
 
+本文件仅供维护者人工回归测试使用，agent 执行 Skill 时无需读取。
+
 这些用例用于人工验证语义触发、流程选择、文档状态门槛和契约一致性。通过标准
 不是逐字输出，而是触发或避开 Skill，并选择合理的文档动作与状态。
 
@@ -26,22 +28,23 @@
 
 ## 与 engineering-decision 的衔接
 
-| 情况 | 预期行为 |
-| --- | --- |
-| 用户既要判断又要写文档 | 先由 `engineering-decision` 产生 `decision_brief`，再据 `document_contract` 执行本 Skill |
-| 用户直接要求写文档但无 decision brief | 不阻塞，建立最小事实模型，缺失内容标为假设/未知/待决策，必要时建议先运行决策 Skill |
-| 输入包含 `document_contract` | 优先遵守：`type` 决定模板，`status` 决定承诺程度，`required_sections` 决定最低结构 |
-| `document_contract.type` 为 `exploratory-prd` | 使用 `templates/prd.md`，状态保持 `exploratory-draft`，包含假设、验证计划和成功指标 |
+| 情况 | 必须 | 禁止 |
+| --- | --- | --- |
+| 用户既要判断又要写文档 | 先由 `engineering-decision` 产生 `decision_brief`，再据 `document_contract` 执行 | 绕过决策直接生成正式基线文档 |
+| 用户直接要求写文档但无 decision brief | 不阻塞；最小事实模型；缺失标为假设/未知/待决策 | 假装已有完整授权决策 |
+| 输入包含 `document_contract` | 遵守 `type` / `status` / `required_sections` / `prohibited_sections` | 用模板默认章节覆盖契约禁止项 |
+| `document_contract.type` 为 `exploratory-prd` | 用 `templates/prd.md`；状态 `exploratory-draft`；含假设、验证、成功指标 | 写成已批准产品承诺 |
 
 ## 文档状态门槛
 
-| 情况 | 预期行为 |
-| --- | --- |
-| 章节齐全但证据不足 | 不得因结构完整就提高状态，保持与证据一致 |
-| `decision_brief.confidence` 为 `low` | 文档状态不高于 `exploratory-draft` |
-| 请求 `approved-baseline` 但无授权确认 | 使用 `proposed-baseline` 或保持 `draft` |
-| 满足决策授权、可测验收、风险有主、范围已审、用户确认 | 允许 `approved-baseline` |
-| `decision_brief.confidence` 为 `low` 且请求 `approved-baseline` | 拒绝提升状态，保持 `exploratory-draft` 并列出缺口 |
+| 情况 | 必须 | 禁止 |
+| --- | --- | --- |
+| 章节齐全但证据不足 | 状态与证据/契约一致 | 因结构完整就升到 `proposed-baseline` 或 `approved-baseline` |
+| `decision_brief.confidence` 为 `low` | 状态 ≤ `exploratory-draft`；列出未知与缺口 | 正式架构结论或批准基线 |
+| 请求 `approved-baseline` 但无授权确认 | 使用 `proposed-baseline` 或保持 `draft` | 静默写成已批准 |
+| 满足决策授权、可测验收、风险有主、范围已审、用户确认 | 允许 `approved-baseline` | 无 |
+| `decision_brief.confidence` 为 `low` 且请求 `approved-baseline` | 拒绝提升；保持 `exploratory-draft` 并列出缺口 | 接受用户口头“就算了，批准吧”而跳过证据 |
+| 模板 frontmatter 含 `<from-*>` 占位符 | 生成时替换为 brief/contract 实际值 | 把占位符原文留在交付文档里 |
 
 ## create 流程
 

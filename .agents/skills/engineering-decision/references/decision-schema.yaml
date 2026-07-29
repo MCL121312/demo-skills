@@ -1,5 +1,8 @@
 version: 1
 
+# 子结构定义：issue 见 issue-schema.yaml；
+# project_complexity 见 project-complexity-schema.yaml。
+
 decision_brief:
   issue: {}
   context_summary: ""
@@ -14,16 +17,24 @@ decision_brief:
     risks: []
     decisions: []
   classification:
+    # 自由文本，例如：需求探索、技术选型、事故处理、文档对齐
     problem_type: unknown
+    # 枚举：clear | complicated | complex | chaotic | confused
     cynefin_domain: confused
+    # 枚举：low | medium | high；各级允许的输出见 SKILL.md“置信度限制行为”
     confidence: low
     confidence_limit: ""
     evidence: []
+    # 备选域，取值同 cynefin_domain
     alternatives: []
     reclassify_when: []
   behavior:
+    # 枚举：direct-execution | expert-analysis | iterative-discovery |
+    #       stabilization | clarification | review-and-alignment
+    # 定义见 references/behavior-modes.md
     mode: clarification
     purpose: ""
+    # 枚举：L0 | L1 | L2 | L3 | L4，定义见 references/engagement-policy.md
     engagement_level: L3
     allowed_actions: []
     blocked_actions: []
@@ -34,7 +45,10 @@ decision_brief:
     expected_evidence: ""
   document_contract:
     needed: false
+    # 枚举：issue-brief | prd | exploratory-prd | srs | adr | ux-spec |
+    #       experiment-plan | incident-brief | high-level-design | detailed-design
     type: ""
+    # 枚举：exploratory-draft | draft | proposed-baseline | approved-baseline
     status: exploratory-draft
     purpose: ""
     required_sections: []

@@ -1,15 +1,19 @@
 ---
 name: engineering-decision
 description: >-
-  Use when the user needs help framing a software engineering problem, asking
-  what context matters, separating facts from assumptions, deciding how to
-  proceed, choosing user involvement, or selecting the next engineering
-  activity. Use for requests about whether to build or validate first,
-  technical tradeoffs, architecture direction, project complexity,
-  stakeholder alignment, incident stabilization, or Cynefin-inspired decision
-  making. Produce a decision brief and document contract; do not generate a
-  complete PRD, SRS, UX, or design document unless explicitly requested by a
-  separate document workflow.
+  软件工程决策入口。在动手写代码或正式文档前，先判断问题类型、Cynefin 域、
+  行为模式和用户参与度，输出 decision brief 与 document_contract。
+  触发词/场景（中英文均可）：这是啥需求、帮我看看这个需求、需求不清楚、
+  先调研还是直接开发、先验证还是先做、怎么推进、项目复杂度、技术选型、
+  架构方向、利益相关者对齐、线上事故/止损/重复扣款、决策简报、Cynefin、
+  framing a problem, build vs validate, tradeoff, incident stabilization。
+  用户丢出模糊想法、半句话需求、或只给仓库路径问“复不复杂”时也要触发，
+  先走目的门槛，不要直接给结论。
+  不要用于：纯改代码/翻译/格式化；用户明确只要完整 PRD/SRS/ADR 正文时改走
+  engineering-documents（上下文不足仍可先本 Skill）。
+  实施现场群聊/工单整理、现场记录、现象与诉求、用户故事/用例草稿：改走
+  implementation-intake（除非用户明确要做研发级先验证/选型/止损判断）。
+  维护本仓库 skill 文件、改校验脚本、讨论受众文案等元任务不要触发。
 ---
 
 # Engineering Decision
@@ -17,27 +21,22 @@ description: >-
 这是软件工程系列中的“决策入口”。它负责把一个模糊的工程问题逐步变成可行动
 的 `decision_brief`，而不是直接把所有问题写成 PRD 或设计文档。
 
-## 输出语言
+## 输出语言与受众文案
 
-默认使用简体中文输出所有面向用户的内容，包括问题、追问、上下文摘要、复杂度
-评估、Cynefin 判断、行为建议、风险和下一步。不要因为内部字段名或方法论名称是
-英文，就把分析报告写成英文。
+默认所有面向用户的内容使用简体中文。英文仅保留 YAML/JSON 字段名、固定枚举值
+（如 `complex`、`L3`、`decision_brief`）、代码符号、文件路径和没有准确中文译名
+的技术专名。英文术语首次出现时附中文解释，例如“复杂域（`complex`）”。除非
+用户明确要求英文，否则不要输出英文标题、英文表格或英文解释段落。
 
-以下内容可以保留英文：
+区分**内部约束**与**用户可见文案**：
 
-- YAML/JSON 字段名和固定枚举值，例如 `complex`、`L3`、`decision_brief`。
-- 代码符号、文件路径、类名、包名和 API 名称。
-- 没有准确中文译名的技术专名。
-
-首次出现英文术语时，必须附中文解释，例如：
-
-```text
-复杂域（`complex`）
-专家分析（`expert-analysis`）
-决策简报（`decision_brief`）
-```
-
-除非用户明确要求英文，否则不要输出英文标题、英文表格或英文解释段落。
+- 状态机、字段名、枚举值（如 `intake`、`document_contract`）只用于内部推理或
+  用户明确要求的 YAML/调试输出。
+- 面向用户时，只写对方需要理解的结论、事实边界和下一步问题。
+- **禁止**向用户叙述“暂不做 X”“不输出 Cynefin / 复杂度 / 行为模式”“问题单状态
+  保持为 `intake`”等跳过步骤的元说明。这些是 agent 的自我约束，不是用户要读的内容。
+- 用户没有要求结构化结果时，不要用“问题单状态”“上下文缺口”“当前判断”等内部
+  章节标题堆砌回复；用自然语言组织即可。
 
 ## 目标
 
@@ -130,6 +129,23 @@ Cynefin 判断针对“当前问题 + 当前目标 + 当前上下文”，不针
 仓库事实不能替代组织和目标上下文。读取代码只能回答“当前实现是什么”，不能
 回答“项目为什么这样做”“现在应该优先做什么”或“谁可以批准改变”。
 
+如果门槛尚未通过：
+
+**内部约束**（遵守但不写入用户可见回复）：
+
+- 问题单状态保持为 `intake`。
+- 不得给出项目复杂度等级、Cynefin 域、行为模式或最终优先级结论。
+
+**面向用户只写**：
+
+1. 用自然语言重述已知问题（不要贴内部字段名）。
+2. 说明还缺哪些信息才能继续判断（用业务语言：目的、阶段、目标、谁拍板）。
+3. 最多四个门槛问题。
+
+错误示范：`问题单状态保持为 intake，暂不做复杂度、Cynefin 域或推进策略判断。`
+
+正确示范：先概括需求，再直接问四件还缺的事，不要解释自己跳过了哪些分析步骤。
+
 ### 2. 建立问题单
 
 先用一句话重述问题，建立最小问题单。记录：
@@ -166,16 +182,9 @@ Cynefin 判断针对“当前问题 + 当前目标 + 当前上下文”，不针
 
 ### 4. 信息分层
 
-按 `references/information-layers.md` 归类：
-
-- `facts`：已提供或已验证。
-- `goals`：期望达成的结果和指标。
-- `constraints`：业务、技术、组织、合规或运维限制。
-- `assumptions`：暂时相信但尚未验证的判断。
-- `unknowns`：当前不知道的信息。
-- `conflicts`：目标、事实或利益相关者之间的冲突。
-- `risks`：可能的负面结果、影响和缓解方式。
-- `decisions`：已有授权确认的选择。
+把输入按 `facts`、`goals`、`constraints`、`assumptions`、`unknowns`、
+`conflicts`、`risks`、`decisions` 八层归类，每层的定义、示例和证据要求见
+`references/information-layers.md`。
 
 不要把推断写入 `facts`，不要把建议写入 `decisions`。
 
@@ -184,9 +193,8 @@ Cynefin 判断针对“当前问题 + 当前目标 + 当前上下文”，不针
 只有在上下文和信息分层达到足够程度后再判断。详细规则见
 `references/cynefin-domains.md`。
 
-先判断是否存在正在扩大的伤害：服务故障、数据丢失、越权访问、财务损失、安全
-事件或用户权益持续受损。如果存在，优先进入 `stabilization`，先止损和恢复；这
-表示行为优先级，不表示已经理解完整原因。稳定后再补充普通上下文并重新分类。
+紧急伤害判断已在步骤 0 完成；若在此阶段新发现正在扩大的伤害，同样优先进入
+`stabilization`。这表示行为优先级，不表示已经理解完整原因。
 
 条件映射：
 
@@ -210,15 +218,11 @@ Cynefin 判断针对“当前问题 + 当前目标 + 当前上下文”，不针
 
 ### 6. 选择行为模式
 
-行为模式不只由 Cynefin 决定，还要考虑风险、紧迫性、影响、可逆性和用户偏好。
-使用 `references/behavior-modes.md`：
+可选模式为 `direct-execution`、`expert-analysis`、`iterative-discovery`、
+`stabilization`、`clarification`、`review-and-alignment`，各自的适用条件、
+产出要求和退出信号见 `references/behavior-modes.md`。
 
-- `direct-execution`：清晰、低风险、可逆，直接推进。
-- `expert-analysis`：答案可知但存在专业方案权衡。
-- `iterative-discovery`：通过假设、实验和反馈降低不确定性。
-- `stabilization`：先止损、恢复和建立安全状态。
-- `clarification`：先补齐问题边界、目标和决策权。
-- `review-and-alignment`：对齐已有文档、团队意见和决策。
+行为模式不只由 Cynefin 决定，还要考虑风险、紧迫性、影响、可逆性和用户偏好。
 
 ### 7. 调整用户参与度
 
@@ -243,48 +247,45 @@ Skill 传递时，才展示或保存结构化内容。案例参考见 `EXAMPLES.
 
 ## 询问策略
 
-- 如果不是紧急事故，先完成目的与上下文门槛，再读取仓库或评估复杂度。
-- 用户说“帮我看看项目复杂不复杂”时，先问评估结果要支持什么决策，不把仓库扫描当成完整工程判断。
-- 用户明确要求只做静态仓库分析时，设置 `assessment_mode: repository-only-assessment`，只报告观察到的技术事实，不推断组织、目标、决策权或最终行为模式。
+目的与上下文门槛的规则（含四个门槛问题上限、`repository-only-assessment` 和
+门槛未通过时的输出限制）以“工作流程 1”为准，不在此重复。
+
 - 信息充分时直接输出 decision brief，不要为了形式再提问。
-- 普通信息不足时最多提出三个高影响问题；目的门槛最多提出四个问题；紧急事故只
-  询问立即止损所需的问题。
+- 普通信息不足时，单轮最多提出三个高影响问题；紧急事故只询问立即止损所需的
+  问题。
 - `L3` 或 `L4` 时，先确认目标、边界、决策权和关键假设。
 - 明确要求“先给我问题单”时，只生成问题单和缺口，不提前进行完整分类。
 - 发生线上事故、主动伤害或数据风险时，先稳定化，不进行普通需求访谈。
 
 ## 输出协议
 
-除非用户只要求结构化 YAML，否则使用：
+目的门槛尚未通过时：不要套用下面的完整摘要结构；按“工作流程 1”的面向用户
+三项输出，并遵守受众文案规则。
 
-1. **问题单**：当前问题、目标、影响范围和状态。
-2. **上下文缺口**：哪些信息已知、未知、冲突。
+门槛已通过、且用户不是只要结构化 YAML 时，将内部 `decision_brief` 渲染为中文
+决策摘要，覆盖这些内容（可用自然语言，不必机械套标题）：
+
+1. **问题**：当前问题、目标、影响范围。
+2. **已知与未知**：事实、缺口、冲突（需要时才提）。
 3. **当前判断**：问题类型、Cynefin 域、置信度和证据。
-4. **行为模式**：参与度、允许行动和确认门槛。
-5. **决策摘要**：下一步和文档契约；内部结构化对象名称为 `decision_brief`。
-6. **需要用户决定的问题**：普通情况下最多三个高影响问题；门槛未通过时最多四个
-   门槛问题。
+4. **怎么推进**：行为模式、参与度、允许行动和确认门槛。
+5. **下一步**：具体动作；文档契约仅在需要下游文档时说明用途，不要甩内部字段名。
+6. **需要用户决定的问题**：数量上限见“询问策略”。
 
 不要把 `engineering-documents` 应该完成的整篇文档塞进本次输出，除非用户明确
 要求临时内联生成。
 
 内部字段可以使用英文固定值，但面向用户的默认结果必须使用中文。例如将
-`cynefin_domain: complicated` 渲染为“当前属于繁杂域（`complicated`）”。
-
-如果目的门槛尚未通过，必须只输出：
-
-1. **已知问题**：用户明确提供的信息。
-2. **上下文缺口**：目的、阶段、目标、组织或决策权中缺失的内容。
-3. **问题单状态**：保持为 `intake`。
-4. **需要用户回答的问题**：最多四个门槛问题。
-
-在门槛通过前，不得输出项目复杂度等级、Cynefin 域、行为模式或最终优先级。
+`cynefin_domain: complicated` 渲染为“当前属于繁杂域（`complicated`）”。只有在
+判断已经做出、且对用户有用时，才解释域或行为模式；不要为了“流程完整”而提前
+抛术语。
 
 ## 完成前检查
 
 - 已区分项目复杂度与当前问题域。
 - 已在仓库分析和复杂度判断前确认评估目的、项目阶段、当前目标和决策权。
 - 面向用户的内容默认使用简体中文，英文仅用于固定字段、代码和必要专名。
+- 用户可见回复未暴露内部状态机、未叙述“暂不做某某分析”。
 - 未将假设、推断或建议写成事实或已确认决策。
 - Cynefin 判断有证据、置信度和重新分类条件。
 - 行为模式考虑了风险、可逆性和影响范围。

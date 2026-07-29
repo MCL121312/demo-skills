@@ -1,10 +1,10 @@
 ---
 type: experiment-plan
-status: exploratory-draft
+status: <from-document-contract>
 version: 0.1
-cynefin_domain: complex
-confidence: low
-behavior_mode: iterative-discovery
+cynefin_domain: <from-decision-brief>
+confidence: <from-decision-brief>
+behavior_mode: <from-decision-brief>
 source_decision_brief: decision-brief.yaml
 ---
 

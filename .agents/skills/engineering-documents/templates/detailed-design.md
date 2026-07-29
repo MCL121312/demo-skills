@@ -1,10 +1,10 @@
 ---
 type: detailed-design
-status: exploratory-draft
+status: <from-document-contract>
 version: 0.1
-cynefin_domain: confused
-confidence: low
-behavior_mode: expert-analysis
+cynefin_domain: <from-decision-brief>
+confidence: <from-decision-brief>
+behavior_mode: <from-decision-brief>
 source_decision_brief: decision-brief.yaml
 source_model: requirements-model.yaml
 ---

@@ -2,7 +2,11 @@
 
 本文档用于说明 `engineering-decision` 的典型判断方式和边界。案例中的 YAML
 是内部 `decision_brief` 的简化表示，不是默认展示给用户的格式。面向用户时，
-应将它渲染成中文摘要。
+应将它渲染成中文摘要；不要把内部状态、跳过步骤或字段名原样甩给用户。
+完整字段定义见 `references/decision-schema.yaml`。
+
+案例三写出完整 YAML 作为格式示范，其余四个只给判断结论。五个域各一个案例，
+用于对照「证据不同则下一步不同」。
 
 ## 如何使用案例
 
@@ -15,97 +19,33 @@
 
 ## 案例一：清晰域（`clear`）
 
-### 用户输入
-
 > 给已有订单列表增加一个按订单号精确搜索的输入框，后端已有查询接口，
 > 搜索结果和现有列表复用同一套分页规则，写一个 SRS 草稿。
 
-### 信息判断
+目标、接口和分页规则都已确定，缺的只是字段校验和错误提示细节，不阻塞初稿。
 
-- 目标明确：增加精确搜索。
-- 接口已有：不需要探索技术路线。
-- 分页规则明确：验收边界基本清楚。
-- 缺少字段校验和错误提示细节，但不阻止生成草稿。
+判断：清晰域（`clear`）、直接推进（`direct-execution`）、`L1`；文档契约为
+`srs` / `draft`，必需章节是功能需求、校验和验收标准。
 
-### 内部判断
-
-```yaml
-classification:
-  problem_type: specified-change
-  cynefin_domain: clear
-  confidence: high
-behavior:
-  mode: direct-execution
-  engagement_level: L1
-document_contract:
-  needed: true
-  type: srs
-  status: draft
-  purpose: specify-search-behavior
-  required_sections:
-    - functional_requirements
-    - validation
-    - acceptance_criteria
-```
-
-### 面向用户的结果
-
-当前需求属于清晰域（`clear`），可以直接整理成 SRS 草稿。字段校验和错误提示
-仍需补充，但不会阻塞初稿。
-
-### 不应做的事
-
-- 不需要先做用户访谈。
-- 不需要把它升级成完整架构评估。
-- 不应因为项目整体很大，就提高这个小变更的处理复杂度。
+不应做：先安排用户访谈；升级成完整架构评估；因为项目整体很大就抬高这个小
+变更的处理规格。
 
 ## 案例二：繁杂域（`complicated`）
-
-### 用户输入
 
 > 需要把订单数据从单体数据库迁移到独立服务。业务规则、接口契约和迁移目标
 > 已经确定，但需要在双写、停机迁移和 CDC 之间选择方案。
 
-### 信息判断
+目标、业务规则和接口契约都已确定，难点在技术方案、性能、回滚和运维权衡，
+不是用户需求探索。
 
-- 目标、业务规则和接口契约已经确定。
-- 难点是技术方案、性能、回滚和运维权衡。
-- 不是用户需求探索问题。
+判断：繁杂域（`complicated`）、专家分析（`expert-analysis`）、`L2`；文档契约为
+`adr` / `draft`，必需章节是决策驱动因素、候选方案、权衡和回滚。先明确评价标准
+再比较方案，由授权决策者拍板。
 
-### 内部判断
+不应做：因为技术难就判成复杂域（`complex`）；直接生成已选定方案的详细设计；
+把候选方案写成已确认决策。
 
-```yaml
-classification:
-  problem_type: architecture-choice
-  cynefin_domain: complicated
-  confidence: high
-behavior:
-  mode: expert-analysis
-  engagement_level: L2
-document_contract:
-  needed: true
-  type: adr
-  status: draft
-  purpose: compare-migration-options
-  required_sections:
-    - decision_drivers
-    - alternatives
-    - tradeoffs
-    - rollback
-```
-
-### 面向用户的结果
-
-当前属于繁杂域（`complicated`），适合进行专家分析。先明确评价标准，比较三种
-迁移方案，再由授权决策者确认，不应由 Agent 静默替用户选择。
-
-### 不应做的事
-
-- 不应因为技术难就判为复杂域（`complex`）。
-- 不应直接生成已经选定方案的详细设计。
-- 不应把候选方案写成已确认决策。
-
-## 案例三：复杂域（`complex`）
+## 案例三：复杂域（`complex`）——完整格式示范
 
 ### 用户输入
 
@@ -161,109 +101,36 @@ document_contract:
 
 ## 案例四：混乱域（`chaotic`）
 
-### 用户输入
-
 > 新版本上线后订单重复扣款，客服投诉正在增加，需要先处理问题，再讨论
 > 长期改造方案。
 
-### 信息判断
+正在发生实际财务影响且可能继续扩大，当前第一目标是止损和恢复，不是完整
+理解系统。
 
-- 正在发生实际财务影响。
-- 影响范围可能继续扩大。
-- 当前第一目标是止损和恢复，不是完整理解系统。
+判断：混乱域（`chaotic`）、稳定化（`stabilization`）、`L4`；文档契约为
+`incident-brief` / `draft`，必需章节是影响、遏制、恢复和时间线。这是唯一会用到
+`blocked_actions` 的场景——长期设计基线在稳定前被禁止。
 
-### 内部判断
-
-```yaml
-classification:
-  problem_type: production-incident
-  cynefin_domain: chaotic
-  confidence: high
-behavior:
-  mode: stabilization
-  engagement_level: L4
-  allowed_actions:
-    - contain_harm
-    - assess_impact
-    - recover_service
-    - record_decisions
-  blocked_actions:
-    - baseline_long_term_design
-document_contract:
-  needed: true
-  type: incident-brief
-  status: draft
-  purpose: contain-and-recover
-  required_sections:
-    - impact
-    - containment
-    - recovery
-    - timeline
-```
-
-### 面向用户的结果
-
-当前属于混乱域（`chaotic`），先进行稳定化和止损。优先确认影响范围、暂停或
-隔离有问题的流程、恢复服务并记录决策；稳定后再进入根因分析和长期改造。
-
-### 不应做的事
-
-- 不应先写普通 PRD。
-- 不应在事故过程中承诺长期架构方案。
-- 不应为了完善分析而延误止损。
+不应做：先写普通 PRD；在事故过程中承诺长期架构方案；为了完善分析而延误止损。
 
 ## 案例五：未明状态（`confused`）
 
-### 用户输入
-
 > 我给你一个健康管理后端项目地址，帮我评估一下项目复杂度。
 
-### 信息判断
+即使可以读取仓库，也缺少决定评估意义所需的上下文：评估要支持什么决策、项目
+处于什么阶段、当前最重要的目标、哪些团队参与、谁拥有最终决策权，以及这是
+教学、试用还是生产系统。
 
-即使可以读取仓库，也缺少决定评估意义所需的上下文：
+判断：未明状态（`confused`）、先澄清（`clarification`）、`L3`；文档契约为
+`issue-brief` / `exploratory-draft`，下一步是采集目的与上下文。
 
-- 这次评估要支持什么决策？
-- 项目目前处于什么阶段？
-- 当前最重要的目标是什么？
-- 哪些团队参与？
-- 谁拥有最终决策权？
-- 项目是教学、试用、内部使用还是生产系统？
+面向用户只写：目前只有仓库路径，还无法判断该怎么评估。先确认四件事——你希望
+这次评估支持什么决策？项目目前处于什么阶段？当前最重要的目标是什么？有哪些
+团队参与，谁拥有最终决策权？
 
-### 内部判断
-
-```yaml
-classification:
-  problem_type: project-assessment
-  cynefin_domain: confused
-  confidence: high
-behavior:
-  mode: clarification
-  engagement_level: L3
-next_action:
-  description: collect-purpose-and-context
-document_contract:
-  needed: true
-  type: issue-brief
-  status: exploratory-draft
-  purpose: establish-assessment-context
-  required_sections:
-    - assessment_purpose
-    - project_stage
-    - current_goal
-    - organization_and_decision_rights
-```
-
-### 面向用户的结果
-
-在评估仓库前，需要先确认四件事：评估目的、项目阶段、当前目标、参与团队和
-决策者。补齐这些信息前，只建立问题单和上下文缺口，不输出项目复杂度等级或
-最终推进建议。
-
-### 不应做的事
-
-- 不应仅凭仓库文件数量给出项目复杂度。
-- 不应从组织名称推断组织架构。
-- 不应把代码结构直接等同于项目目标。
+不应做：仅凭仓库文件数量给出复杂度；从组织名称推断组织架构；把代码结构等同于
+项目目标；向用户写「状态保持 `intake`」或「暂不做复杂度 / Cynefin 判断」这类
+过程旁白。
 
 ## 边界案例一：技术很难，但不是复杂域
 
