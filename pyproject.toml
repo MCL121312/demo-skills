@@ -11,8 +11,8 @@ dependencies = [
     "PyYAML>=6.0,<7",
 ]
 
-[project.optional-dependencies]
-test = []
+# Tests use only the stdlib unittest runner plus the PyYAML runtime dependency,
+# so no extra test group is declared.
 
 # No importable package here, only scripts/ and tests/. Declaring an empty
 # module list disables setuptools flat-layout auto-discovery, which otherwise

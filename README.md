@@ -132,12 +132,13 @@ exploratory-draft → draft → proposed-baseline → approved-baseline
 需要 Python 3.9 或更高版本。安装依赖后，可从任意工作目录执行：
 
 ```bash
-python3 -m pip install -e '.[test]'
+python3 -m pip install -e .
 python3 scripts/validate_skills.py
 python3 -m unittest discover -s tests
 ```
 
-同样这两条命令由 `.github/workflows/validate.yml` 在 main 分支和 PR 上执行。
+后两条校验命令由 `.github/workflows/validate.yml` 在 main 分支和 PR 上执行，
+使用的 Python 版本与 `requires-python` 的下限一致。
 
 跨 Skill 的完整示例见 `docs/skill-flow-example.md`，触发边界见
 `docs/skill-trigger-matrix.md`。
@@ -149,3 +150,6 @@ python3 -m unittest discover -s tests
 - **高风险操作必须确认**：不可逆、高影响的操作始终需要明确的确认门槛。
 - **中文优先**：面向用户的所有内容默认使用简体中文；英文只保留固定字段名、代码和必要技术专名。
 - **受众文案**：内部状态机与“暂不做某某分析”是 agent 约束，不要写进用户可见回复；用户只需要结论、边界和下一步问题。
+- **快速通道优先**：低风险、可逆、上下文给全的小问题直接回答，不强制完整决策流程；发现隐藏风险立即退出快速通道。
+- **决策有保质期**：decision brief 记录有效期与重评信号；假设被证伪或环境变化时降级或重评，不沿用过期结论。
+- **基线可覆盖，但必须显式**：`.agents/shared/` 给出的是基线默认值，各技能可按阶段覆盖，覆盖时必须写明阶段、数值和单位；硬底线不接受覆盖。约定见 `.agents/shared/conventions.md`。

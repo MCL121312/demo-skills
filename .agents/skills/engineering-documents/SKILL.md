@@ -100,7 +100,8 @@ description: >-
 2. 根据新证据更新受影响章节。
 3. 不要静默删除冲突、假设或历史决策。
 4. 如果确定性或行为模式发生变化，更新元数据并建议重新运行
-   `engineering-decision`。
+   `engineering-decision`。确定性下降时文档状态随之降级（如 `proposed-baseline`
+   回到 `draft`）并重新标注假设，不得沿用高于证据的状态。
 
 ### `review`
 

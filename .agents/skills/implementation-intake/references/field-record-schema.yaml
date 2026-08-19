@@ -39,8 +39,11 @@ field_record:
         页面名、单号、是否可复现等缺口；只留没有写成 open_questions 的部分，
         已经问出口的不在此重复。全部已问则整项省略。
     open_questions:
+      # 单位为整单（交付时累计保留数），与 SKILL.md 的单轮两问上限并存，
+      # 两者都要满足。单位定义见 .agents/shared/conventions.md。
       description: 整单最多 3 个；只问会改变拆条或模块归属的问题
       max: 3
+      unit: 整单
 
 item:
   description: >

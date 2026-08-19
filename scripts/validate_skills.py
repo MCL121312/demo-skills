@@ -36,6 +36,30 @@ REQUIRED_TEMPLATE_FIELDS = {
     "behavior_mode",
     "source_decision_brief",
 }
+
+# Shared baseline documents every skill may reference. Missing any of them turns
+# the cross-skill references into broken links.
+REQUIRED_SHARED_FILES = {
+    "conventions.md",
+    "cynefin.md",
+    "engagement-and-behavior.md",
+    "information-layers.md",
+    "stakeholder-conflict.md",
+}
+
+# Markdown inside a skill directory uses skill-relative paths.
+SKILL_RELATIVE_REFERENCE = re.compile(
+    r"`((?:references/|\.\./\.\./shared/)[^`]+)`"
+)
+# README and docs/ use repository-root-relative paths.
+ROOT_REFERENCE = re.compile(
+    r"`((?:\.agents/|\.github/|docs/|scripts/|tests/)[^`]+)`"
+)
+# YAML comments cannot rely on the skill-relative form, because they sit one
+# level deeper than SKILL.md; they use repository-root-relative paths instead.
+YAML_ROOT_REFERENCE = re.compile(r"(\.agents/[A-Za-z0-9._/-]+)")
+
+
 def get_enums(value):
     if not isinstance(value, str):
         return []
@@ -53,6 +77,75 @@ def load_frontmatter(path):
     if not match:
         return None
     return yaml.safe_load(match.group(1))
+
+
+def check_shared_documents(root, errors):
+    shared_dir = root / ".agents/shared"
+    for name in sorted(REQUIRED_SHARED_FILES):
+        if not (shared_dir / name).exists():
+            errors.append(
+                f"[Shared] Required shared document not found: "
+                f".agents/shared/{name}"
+            )
+
+
+def check_enum_alignment(doc_metadata, errors):
+    """Keep the enums hardcoded here in sync with document-metadata.yaml."""
+    for field, allowed in (
+        ("behavior_mode", ALLOWED_BEHAVIORS),
+        ("cynefin_domain", ALLOWED_CYNEFIN_DOMAINS),
+        ("confidence", ALLOWED_CONFIDENCE),
+    ):
+        declared = set(get_enums(doc_metadata.get(field)))
+        if declared != allowed:
+            errors.append(
+                f"[Enum Mismatch] {field} differs between validator and "
+                f"document-metadata.yaml: {sorted(declared ^ allowed)}"
+            )
+
+
+def check_schema_files_parse(base_dir, errors):
+    for schema_file in sorted(base_dir.glob("*/references/*.yaml")):
+        try:
+            with schema_file.open() as file:
+                yaml.safe_load(file)
+        except yaml.YAMLError as exc:
+            errors.append(
+                f"[Schema] {schema_file.parent.parent.name}/references/"
+                f"{schema_file.name} YAML error: {exc}"
+            )
+
+
+def check_references(root, base_dir, errors):
+    for skill_dir in sorted(path for path in base_dir.glob("*") if path.is_dir()):
+        for markdown in sorted(skill_dir.glob("*.md")):
+            content = markdown.read_text()
+            for reference in SKILL_RELATIVE_REFERENCE.findall(content):
+                if not (skill_dir / reference).resolve().exists():
+                    errors.append(
+                        f"[Reference] Broken link in {skill_dir.name}/"
+                        f"{markdown.name}: '{reference}'"
+                    )
+
+    root_documents = [root / "README.md"] + sorted((root / "docs").glob("*.md"))
+    for markdown in root_documents:
+        if not markdown.exists():
+            errors.append(f"[Reference] Expected document not found: {markdown}")
+            continue
+        for reference in ROOT_REFERENCE.findall(markdown.read_text()):
+            if not (root / reference).exists():
+                errors.append(
+                    f"[Reference] Broken link in {markdown.name}: '{reference}'"
+                )
+
+    for schema_file in sorted(base_dir.glob("*/references/*.yaml")):
+        for reference in YAML_ROOT_REFERENCE.findall(schema_file.read_text()):
+            if not (root / reference).exists():
+                errors.append(
+                    f"[Reference] Broken link in "
+                    f"{schema_file.parent.parent.name}/references/"
+                    f"{schema_file.name}: '{reference}'"
+                )
 
 
 def validate(root=None):
@@ -75,12 +168,23 @@ def validate(root=None):
         print_errors(errors)
         return 1
 
+    # Parsing must be verified before the eager loads below, otherwise a broken
+    # schema surfaces as a traceback instead of a validation error.
+    check_schema_files_parse(base_dir, errors)
+    if errors:
+        print_errors(errors)
+        return 1
+
     with doc_metadata_path.open() as file:
         doc_metadata = yaml.safe_load(file)["document"]
     with doc_contract_path.open() as file:
         doc_contract = yaml.safe_load(file)["document_contract"]
     with decision_schema_path.open() as file:
         decision_schema = yaml.safe_load(file)["decision_brief"]
+
+    check_shared_documents(root, errors)
+    check_enum_alignment(doc_metadata, errors)
+    check_references(root, base_dir, errors)
 
     meta_types = set(get_enums(doc_metadata.get("type")))
     contract_types = set(get_enums(doc_contract.get("type")))
@@ -214,23 +318,22 @@ def validate(root=None):
             )
             frontmatter = None
 
+        # Reference links are checked for every markdown file by
+        # check_references, so this loop only covers frontmatter.
         if not isinstance(frontmatter, dict):
             errors.append(f"[Skill] {skill_md.parent.name}/SKILL.md missing frontmatter")
-        elif not frontmatter.get("name") or not frontmatter.get("description"):
+            continue
+
+        name = frontmatter.get("name")
+        if not name or not frontmatter.get("description"):
             errors.append(
                 f"[Skill] {skill_md.parent.name}/SKILL.md missing name or description"
             )
-
-        with skill_md.open() as file:
-            content = file.read()
-        references = re.findall(r"`references/([^`]+)`", content)
-        for reference in references:
-            reference_path = skill_md.parent / "references" / reference
-            if not reference_path.exists():
-                errors.append(
-                    f"[Reference] Broken link in {skill_md.parent.name}/SKILL.md: "
-                    f"'references/{reference}'"
-                )
+        elif name != skill_md.parent.name:
+            errors.append(
+                f"[Skill] {skill_md.parent.name}/SKILL.md declares name {name!r}, "
+                f"which does not match its directory name"
+            )
 
     if errors:
         print_errors(errors)

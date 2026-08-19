@@ -4,6 +4,16 @@ version: 1
 # project_complexity 见 project-complexity-schema.yaml。
 
 decision_brief:
+  # 决策状态。枚举：active | implemented | deferred | superseded | invalidated
+  status: active
+  # 有效期与重评信号，规则见 SKILL.md“决策有效期与重评估”
+  validity:
+    # 主域默认：clear P3M / complicated P1M / complex P2W / chaotic P1D / confused P1W
+    expires_after: P1M
+    last_assessed_at: ""
+    reevaluate_on: []
+  # 被新 decision brief 取代时记录其标识
+  superseded_by: ""
   issue: {}
   context_summary: ""
   project_complexity: {}
@@ -31,10 +41,11 @@ decision_brief:
   behavior:
     # 枚举：direct-execution | expert-analysis | iterative-discovery |
     #       stabilization | clarification | review-and-alignment
-    # 定义见 references/behavior-modes.md
+    # 定义见 .agents/shared/engagement-and-behavior.md
     mode: clarification
     purpose: ""
-    # 枚举：L0 | L1 | L2 | L3 | L4，定义见 references/engagement-policy.md
+    # 枚举：L0 | L1 | L2 | L3 | L4
+    # 定义见 .agents/shared/engagement-and-behavior.md
     engagement_level: L3
     allowed_actions: []
     blocked_actions: []
