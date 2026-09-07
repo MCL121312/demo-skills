@@ -13,7 +13,7 @@ source_model: requirements-model.yaml
 
 ## 1. 问题
 
-## 2. 用户与利益相关者
+## 2. 用户
 
 ## 3. 目标与成功指标
 

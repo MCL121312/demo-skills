@@ -10,8 +10,6 @@ issue:
   requested_artifacts: []
   project_stage: unknown
   current_goal: ""
-  stakeholders: []
-  decision_maker: ""
   affected_users: []
   affected_systems: []
   urgency: unknown

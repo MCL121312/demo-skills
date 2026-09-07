@@ -44,7 +44,6 @@ REQUIRED_SHARED_FILES = {
     "cynefin.md",
     "engagement-and-behavior.md",
     "information-layers.md",
-    "stakeholder-conflict.md",
 }
 
 # Markdown inside a skill directory uses skill-relative paths.
