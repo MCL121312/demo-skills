@@ -25,7 +25,7 @@ description: >-
 判断（先验证还是先做、架构权衡、事故止损）时，再交给 `engineering-decision`。
 
 核心概念见 `../../shared/cynefin.md`、`../../shared/information-layers.md`、
-`../../shared/engagement-and-behavior.md`；基线覆盖关系与计量单位见
+`../../shared/engagement-and-behavior.md`；基线覆盖关系见
 `../../shared/conventions.md`。字段枚举见 `references/field-record-schema.yaml`。
 
 ## 定位
@@ -97,10 +97,8 @@ intake 被触发时，Agent 先建立对项目的基线认知。这不是为了�
    个人健康监测里的还是体检报告里的？"——因为 Agent 已经扫过项目，知道有几个
    候选答案。
 
-2. **单轮最多两个问题。** 这是对 `../../shared/engagement-and-behavior.md` 单轮
-   三问基线的覆盖，依据是现场对话要压低实施人员的认知负荷。先按"答案会不会改变
-   条目拆分或模块归属"筛选，不足两个就按实际数量问，不要凑数，也不要一次甩五个
-   问题。整单待确认问题另有上限，见 `references/field-record-schema.yaml`。
+2. **只问会改变条目拆分或模块归属的问题，不设数量上限。** 现场对话要压低
+   实施人员的认知负荷：一次只问当前最关键的缺口，不要一次甩出一堆问题。
 
 3. **用大白话，不用框架术语。** 不要问"这个现象的证据等级是什么"，而是问"这个
    情况是你自己看到的，还是客户告诉你的？"
@@ -211,7 +209,7 @@ intake 被触发时，Agent 先建立对项目的基线认知。这不是为了�
 
 - 共享核心模型：`../../shared/cynefin.md`、`../../shared/information-layers.md`、
   `../../shared/engagement-and-behavior.md`
-- 基线覆盖约定与计量单位：`../../shared/conventions.md`
+- 基线覆盖约定：`../../shared/conventions.md`
 - 字段与枚举：`references/field-record-schema.yaml`
 - 典型对话与正反例：`EXAMPLES.md`
 - 人工回归用例：`TEST_CASES.md`
