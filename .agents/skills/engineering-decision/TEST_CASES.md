@@ -52,7 +52,7 @@
 | 帮我梳理这个想法并输出 PRD | `clarification` 或 `iterative-discovery` | 通常 `confused` / `complex` | 先决策再文档契约；未知标为假设 | 直接写成 `approved-baseline` PRD |
 | 这个需求应该先调研还是直接开发 | 由证据决定，先完成 Cynefin 判断 | 根据证据判断 | 输出域、置信度、证据、下一步 | 在证据不足时给最终路径 |
 | 根据 PRD 生成概要设计并检查是否缺信息 | `expert-analysis` 或 `direct-execution` | 通常 `complicated` 或 `clear` | 列出信息缺口；可给 `document_contract` | 把缺口静默填成虚构架构 |
-| 检查 PRD、SRS 和 UX 是否互相矛盾 | `review-and-alignment` | 不预设 | 记录冲突并交给授权人 | 自行挑一边当最终决策 |
+| 检查 PRD、SRS 和 UX 是否互相矛盾 | `review-and-alignment` | 不预设 | 记录冲突并交给用户 | 自行挑一边当最终决策 |
 | 用户不知道 AI 助手最需要什么功能，先帮我设计验证方式 | `iterative-discovery` | `complex` | 假设 + 验证方式 + 成功指标 | 跳过验证直接详细设计 |
 | 线上发生重复扣款，先帮我组织止损和恢复 | `stabilization` | `chaotic` | 止损/恢复步骤与确认门槛 | 先写长期 PRD 或架构 |
 

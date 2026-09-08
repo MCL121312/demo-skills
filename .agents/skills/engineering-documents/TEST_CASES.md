@@ -31,7 +31,7 @@
 | 情况 | 必须 | 禁止 |
 | --- | --- | --- |
 | 用户既要判断又要写文档 | 先由 `engineering-decision` 产生 `decision_brief`，再据 `document_contract` 执行 | 绕过决策直接生成正式基线文档 |
-| 用户直接要求写文档但无 decision brief | 不阻塞；最小事实模型；缺失标为假设/未知/待决策 | 假装已有完整授权决策 |
+| 用户直接要求写文档但无 decision brief | 不阻塞；最小事实模型；缺失标为假设/未知/待决策 | 假装已有完整决策 |
 | 输入包含 `document_contract` | 遵守 `type` / `status` / `required_sections` / `prohibited_sections` | 用模板默认章节覆盖契约禁止项 |
 | `document_contract.type` 为 `exploratory-prd` | 用 `templates/prd.md`；状态 `exploratory-draft`；含假设、验证、成功指标 | 写成已批准产品承诺 |
 
@@ -41,8 +41,8 @@
 | --- | --- | --- |
 | 章节齐全但证据不足 | 状态与证据/契约一致 | 因结构完整就升到 `proposed-baseline` 或 `approved-baseline` |
 | `decision_brief.confidence` 为 `low` | 状态 ≤ `exploratory-draft`；列出未知与缺口 | 正式架构结论或批准基线 |
-| 请求 `approved-baseline` 但无授权确认 | 使用 `proposed-baseline` 或保持 `draft` | 静默写成已批准 |
-| 满足决策授权、可测验收、风险有主、范围已审、用户确认 | 允许 `approved-baseline` | 无 |
+| 请求 `approved-baseline` 但无用户确认 | 使用 `proposed-baseline` 或保持 `draft` | 静默写成已批准 |
+| 满足决策已确认、可测验收、风险有主、范围已审、用户确认 | 允许 `approved-baseline` | 无 |
 | `decision_brief.confidence` 为 `low` 且请求 `approved-baseline` | 拒绝提升；保持 `exploratory-draft` 并列出缺口 | 接受用户口头“就算了，批准吧”而跳过证据 |
 | 模板 frontmatter 含 `<from-*>` 占位符 | 生成时替换为 brief/contract 实际值 | 把占位符原文留在交付文档里 |
 
@@ -53,7 +53,7 @@
 | 有依据的内容 | 直接填充对应章节 |
 | 未知内容 | 放入假设、开放问题、TBD 或待决策，不虚构 |
 | 需要追踪关系 | 建立 `REQ-*`、`UX-*`、`ADR-*`、`DES-*`、`TEST-*` ID |
-| 来源相互冲突 | 记录冲突，把决策问题交授权人，不自行选择 |
+| 来源相互冲突 | 记录冲突，把决策问题交用户，不自行选择 |
 
 ## update 流程
 
@@ -82,7 +82,7 @@
 ## 完成前检查
 
 - 文档类型与 `document_contract` 一致。
-- 文档状态没有超过当前证据和授权范围。
+- 文档状态没有超过当前证据和用户确认范围。
 - 事实、假设、决策、未知和推断清晰区分。
 - 没有虚构用户、指标、接口、架构、约束或审批结果。
 - 需求、UX、设计和测试之间的追踪关系可检查。

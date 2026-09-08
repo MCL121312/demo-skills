@@ -47,7 +47,7 @@ document_contract:
 ## 4. 生成文档
 
 `engineering-documents` 根据 `document_contract` 选择 `adr` 模板，填充已确认事实，
-保留候选方案、权衡、风险和后续验证。没有授权决策前，不能把状态提升为
+保留候选方案、权衡、风险和后续验证。没有用户确认前，不能把状态提升为
 `approved-baseline`。
 
 ## 5. 交接原则
