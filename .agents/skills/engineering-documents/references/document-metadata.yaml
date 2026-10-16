@@ -2,10 +2,16 @@ document:
   type: issue-brief | prd | exploratory-prd | srs | adr | ux-spec | experiment-plan | incident-brief | high-level-design | detailed-design
   status: exploratory-draft | draft | proposed-baseline | approved-baseline
   version: 0.1
+  # profile 决定生成哪些内容行：solo 不生成治理行，team / external 才生成。
+  # 缺哪一域就不要生成那一域，不要留空槽位（见 references/layering.md）。
+  profile: solo | team | external
+  # source_model / constraints_path 指向交付物：人读正文旁边的那份约束文件。
+  source_model: requirements-model.yaml
+  constraints_path: ""
+  # 以下四项仅决策侧使用，不写入交付给读者的正文（见 references/layering.md）。
   cynefin_domain: confused | clear | complicated | complex | chaotic
   confidence: low | medium | high
   behavior_mode: clarification | direct-execution | expert-analysis | iterative-discovery | stabilization | review-and-alignment
   source_decision_brief: decision-brief.yaml
-  source_model: requirements-model.yaml
   decision_required: false
   last_reviewed: ""

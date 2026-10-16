@@ -27,14 +27,32 @@ ALLOWED_CYNEFIN_DOMAINS = {
     "chaotic",
 }
 ALLOWED_CONFIDENCE = {"low", "medium", "high"}
+ALLOWED_PROFILES = {"solo", "team", "external"}
+# Descriptions are routing metadata: they declare what the skill is for and what
+# it must not be used for. Behavior rules belong in the body (see
+# .agents/shared/conventions.md).
+ALLOWED_DESCRIPTION_LENGTH = 240
+# Human-readable templates carry only what the template owner must fill in.
+# Judgment fields belong to the decision brief and the contract file, not to the
+# document a reader opens (see references/layering.md).
 REQUIRED_TEMPLATE_FIELDS = {
     "type",
     "status",
     "version",
+    "source_decision_brief",
+}
+# Validated when present, so templates can be slimmed down one at a time.
+OPTIONAL_BRIEF_TEMPLATE_FIELDS = {
     "cynefin_domain",
     "confidence",
     "behavior_mode",
-    "source_decision_brief",
+}
+# Constraint files mirror the human template: same type, plus the runtime
+# switches that never get printed in the human document.
+REQUIRED_CONSTRAINTS_TEMPLATE_FIELDS = {
+    "type",
+    "status",
+    "profile",
 }
 
 # Shared baseline documents every skill may reference. Missing any of them turns
@@ -43,6 +61,7 @@ REQUIRED_SHARED_FILES = {
     "conventions.md",
     "cynefin.md",
     "engagement-and-behavior.md",
+    "glossary.md",
     "information-layers.md",
 }
 
@@ -94,6 +113,7 @@ def check_enum_alignment(doc_metadata, errors):
         ("behavior_mode", ALLOWED_BEHAVIORS),
         ("cynefin_domain", ALLOWED_CYNEFIN_DOMAINS),
         ("confidence", ALLOWED_CONFIDENCE),
+        ("profile", ALLOWED_PROFILES),
     ):
         declared = set(get_enums(doc_metadata.get(field)))
         if declared != allowed:
@@ -199,6 +219,13 @@ def validate(root=None):
             f"[Enum Mismatch] Status mismatch: {meta_status ^ contract_status}"
         )
 
+    meta_profile = set(get_enums(doc_metadata.get("profile")))
+    contract_profile = set(get_enums(doc_contract.get("profile")))
+    if meta_profile != contract_profile:
+        errors.append(
+            f"[Enum Mismatch] Profile mismatch: {meta_profile ^ contract_profile}"
+        )
+
     if "project_complexity" not in decision_schema:
         errors.append("[Schema] decision_brief must contain project_complexity")
     if not (template_dir / "prd.md").exists():
@@ -243,13 +270,14 @@ def validate(root=None):
             errors.append(
                 f"[Template] {template_file.name} has invalid status: {status!r}"
             )
-        if behavior_mode not in ALLOWED_BEHAVIORS and not is_placeholder(
+        if behavior_mode is not None and not is_placeholder(
             behavior_mode, ALLOWED_BRIEF_PLACEHOLDERS
         ):
-            errors.append(
-                f"[Template] {template_file.name} has invalid behavior_mode: "
-                f"{behavior_mode!r}"
-            )
+            if behavior_mode not in ALLOWED_BEHAVIORS:
+                errors.append(
+                    f"[Template] {template_file.name} has invalid behavior_mode: "
+                    f"{behavior_mode!r}"
+                )
         if cynefin_domain is not None and not is_placeholder(
             cynefin_domain, ALLOWED_BRIEF_PLACEHOLDERS
         ):
@@ -293,9 +321,57 @@ def validate(root=None):
     if extra_templates:
         errors.append(f"[Template] Unknown template types: {sorted(extra_templates)}")
 
+    # Constraint files live beside the human ones and carry the machine-side
+    # switches; they are plain YAML, not markdown frontmatter.
+    constraints_template_dir = template_dir / "constraints"
+    for constraints_file in sorted(constraints_template_dir.glob("*.yaml")):
+        try:
+            with constraints_file.open() as file:
+                constraints_template = yaml.safe_load(file)
+        except yaml.YAMLError as exc:
+            errors.append(
+                f"[Constraints] {constraints_file.name} YAML error: {exc}"
+            )
+            continue
+
+        if not isinstance(constraints_template, dict):
+            errors.append(
+                f"[Constraints] {constraints_file.name} must be a mapping"
+            )
+            continue
+
+        for field in sorted(REQUIRED_CONSTRAINTS_TEMPLATE_FIELDS - constraints_template.keys()):
+            errors.append(
+                f"[Constraints] {constraints_file.name} missing field: {field}"
+            )
+
+        constraints_type = constraints_template.get("type")
+        if constraints_type is not None and constraints_type not in meta_types:
+            errors.append(
+                f"[Constraints] {constraints_file.name} has invalid type: "
+                f"{constraints_type!r}"
+            )
+        constraints_status = constraints_template.get("status")
+        if (
+            constraints_status is not None
+            and constraints_status not in meta_status
+            and not is_placeholder(constraints_status, ALLOWED_STATUS_PLACEHOLDERS)
+        ):
+            errors.append(
+                f"[Constraints] {constraints_file.name} has invalid status: "
+                f"{constraints_status!r}"
+            )
+        constraints_profile = constraints_template.get("profile")
+        if constraints_profile is not None and constraints_profile not in ALLOWED_PROFILES:
+            errors.append(
+                f"[Constraints] {constraints_file.name} has invalid profile: "
+                f"{constraints_profile!r}"
+            )
+
     contract_required = {
         "type",
         "status",
+        "profile",
         "purpose",
         "required_sections",
         "prohibited_sections",
@@ -324,7 +400,8 @@ def validate(root=None):
             continue
 
         name = frontmatter.get("name")
-        if not name or not frontmatter.get("description"):
+        description = frontmatter.get("description")
+        if not name or not description:
             errors.append(
                 f"[Skill] {skill_md.parent.name}/SKILL.md missing name or description"
             )
@@ -333,6 +410,20 @@ def validate(root=None):
                 f"[Skill] {skill_md.parent.name}/SKILL.md declares name {name!r}, "
                 f"which does not match its directory name"
             )
+
+        if description:
+            if len(description) > ALLOWED_DESCRIPTION_LENGTH:
+                errors.append(
+                    f"[Skill] {skill_md.parent.name} description is "
+                    f"{len(description)} chars, over the "
+                    f"{ALLOWED_DESCRIPTION_LENGTH} char limit"
+                )
+            for required_word in ("用于", "不用于"):
+                if required_word not in description:
+                    errors.append(
+                        f"[Skill] {skill_md.parent.name} description must state "
+                        f"when to use it and when not to ({required_word!r} missing)"
+                    )
 
     if errors:
         print_errors(errors)

@@ -1,18 +1,7 @@
 ---
 name: implementation-intake
 description: >-
-  实施现场信息结构化引擎。把群聊、工单、现场口述等噪声材料，通过对话式补全，
-  整理成结构化的现场记录条目。Agent 结合项目上下文做信息评估和 Cynefin 域判断，
-  实施人员提供信号，两者协作完成从混乱到清晰的收敛。
-  默认不写 PRD/SRS/ADR，不做架构决策。
-  触发词/场景（中英文均可）：客户反馈、群聊记录、
-  工单澄清、实施、现场、现场记录、现象与诉求、用户故事、用例、表单重复填写、
-  字段顺序、改不了刷新没了、验收怎么测、implementation intake, field record,
-  user story, use case。
-  用户粘贴微信/企微/钉钉对话、截图文字、工单正文要求"整理一下"时也要触发。
-  不要用于：纯改代码/翻译/格式化；先验证还是先开发、技术选型、架构方向、线上止损
-  （改走 engineering-decision）；用户明确只要完整 PRD/SRS/ADR 正文时改走
-  engineering-documents。维护本仓库 skill 文件等元任务不要触发。
+  实施现场信息结构化：把群聊、工单、口述整理成结构化现场记录（角色·模块·现象·诉求）。用于实施、客户反馈、工单澄清、现场记录、用户故事、用例，以及粘贴微信/钉钉对话要求「整理一下」时。不用于技术选型、线上止损（走 engineering-decision）与完整 PRD/SRS/ADR 正文（走 engineering-documents）；本 Skill 不写正式文档、不做架构决策；维护本框架自身不触发。
 ---
 
 # Implementation Intake

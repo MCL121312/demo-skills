@@ -1,15 +1,7 @@
 ---
 name: engineering-documents
 description: >-
-  软件工程文档工作流：按 decision brief / document_contract 生成、更新、审查
-  或基线化文档。触发词/场景：写 PRD、探索版 PRD、SRS、ADR、UX 规格、
-  实验计划、事件简报、问题单、概要设计、详细设计、审查 SRS/PRD、能否基线、
-  更新这份文档、create/update/review/baseline engineering docs。
-  有 document_contract 时严格遵守类型、状态和必需章节；无 brief 时不阻塞，
-  但必须把缺失标成假设/未知/待决策，不得写成 approved-baseline。
-  不要用于：先调研还是直接开发、怎么推进、项目复杂度、线上止损等决策问题
-  （改走 engineering-decision）；纯改代码/翻译/格式化也不触发。
-  维护本仓库 skill/模板/校验脚本等元任务不要触发。
+  工程文档工作流：生成、更新、审查、基线化文档（PRD、SRS、ADR、UX 规格、实验计划、事件简报、问题简报、概要设计、详细设计）。按 decision brief 与文档契约的 type / status / required_sections 产出。不用于决策判断（走 engineering-decision）；纯改代码/翻译/格式化、维护本框架自身不触发。
 ---
 
 # Engineering Documents

@@ -190,6 +190,95 @@ class ValidateSkillsTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("references/does-not-exist.yaml", result.stdout)
 
+    def test_human_template_without_brief_fields_passes(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            copy_root = self.copy_repository(temp_dir)
+            template = (
+                copy_root
+                / ".agents"
+                / "skills"
+                / "engineering-documents"
+                / "templates"
+                / "srs.md"
+            )
+            slimmed = template.read_text()
+            for field in ("cynefin_domain", "confidence", "behavior_mode"):
+                slimmed = slimmed.replace(
+                    f"{field}: <from-decision-brief>\n", ""
+                )
+            template.write_text(slimmed)
+            result = self.run_validator(copy_root)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_contract_template_with_bad_profile_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            copy_root = self.copy_repository(temp_dir)
+            constraints_dir = (
+                copy_root
+                / ".agents"
+                / "skills"
+                / "engineering-documents"
+                / "templates"
+                / "constraints"
+            )
+            constraints_dir.mkdir(parents=True)
+            (constraints_dir / "srs.constraints.yaml").write_text(
+                "type: srs\nstatus: draft\nprofile: everyone\n"
+            )
+            result = self.run_validator(copy_root)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("[Constraints]", result.stdout)
+        self.assertIn("invalid profile", result.stdout)
+
+    def test_contract_template_missing_profile_is_reported(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            copy_root = self.copy_repository(temp_dir)
+            constraints_dir = (
+                copy_root
+                / ".agents"
+                / "skills"
+                / "engineering-documents"
+                / "templates"
+                / "constraints"
+            )
+            constraints_dir.mkdir(parents=True)
+            (constraints_dir / "srs.constraints.yaml").write_text("type: srs\nstatus: draft\n")
+            result = self.run_validator(copy_root)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("missing field: profile", result.stdout)
+
+    def test_overlong_skill_description_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            copy_root = self.copy_repository(temp_dir)
+            skill_md = (
+                copy_root / ".agents" / "skills" / "engineering-documents" / "SKILL.md"
+            )
+            skill_md.write_text(
+                skill_md.read_text().replace(
+                    "工程文档工作流：", "工程文档工作流：" + "长" * 240 + " ", 1
+                )
+            )
+            result = self.run_validator(copy_root)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("over the 240 char limit", result.stdout)
+
+    def test_skill_description_must_declare_scope(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            copy_root = self.copy_repository(temp_dir)
+            skill_md = (
+                copy_root / ".agents" / "skills" / "implementation-intake" / "SKILL.md"
+            )
+            text = skill_md.read_text()
+            skill_md.write_text(text.replace("不用于", "", 1))
+            result = self.run_validator(copy_root)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("when not to", result.stdout)
+
     def test_skill_name_must_match_directory_name(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             copy_root = self.copy_repository(temp_dir)
